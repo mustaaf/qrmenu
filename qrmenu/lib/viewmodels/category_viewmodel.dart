@@ -8,20 +8,25 @@ class CategoryViewModel extends ChangeNotifier {
   List<Category> _categories = [];
   bool _isLoading = false;
   String? _error;
+  String _currentRestaurantId = '';
 
   // Getters
   List<Category> get categories => _categories;
   bool get isLoading => _isLoading;
   String? get error => _error;
+  String get currentRestaurantId => _currentRestaurantId;
 
   // Load categories from API
-  Future<void> loadCategories() async {
+  Future<void> loadCategories(String restaurantId) async {
+    if (_currentRestaurantId == restaurantId && _categories.isNotEmpty) return;
+
+    _currentRestaurantId = restaurantId;
     _isLoading = true;
     _error = null;
     notifyListeners();
 
     try {
-      _categories = await _apiService.getCategories();
+      _categories = await _apiService.getCategories(restaurantId);
     } catch (e) {
       _error = e.toString();
     } finally {

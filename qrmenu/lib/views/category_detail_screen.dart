@@ -9,10 +9,12 @@ import 'package:go_router/go_router.dart';
 
 class CategoryDetailScreen extends StatefulWidget {
   final String categoryId;
+  final String restaurantId;
 
   const CategoryDetailScreen({
     super.key,
     required this.categoryId,
+    required this.restaurantId,
   });
 
   @override
@@ -23,9 +25,12 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
   @override
   void initState() {
     super.initState();
-    // Load dishes when the screen initializes
+    // Load dishes when the screen initializes with restaurant ID
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<DishViewModel>().loadDishesByCategory(widget.categoryId);
+      context.read<DishViewModel>().loadDishesByCategory(
+            widget.restaurantId,
+            widget.categoryId,
+          );
     });
   }
 
@@ -34,45 +39,24 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
     // Get the category view model
     final categoryViewModel = Provider.of<CategoryViewModel>(context);
 
-    // If categories haven't been loaded yet, load them
+    // Ensure categories are loaded
     if (categoryViewModel.categories.isEmpty &&
-        !categoryViewModel.isLoading &&
-        categoryViewModel.error == null) {
+        categoryViewModel.currentRestaurantId != widget.restaurantId) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        categoryViewModel.loadCategories();
+        categoryViewModel.loadCategories(widget.restaurantId);
       });
 
-      // Show loading indicator while categories are being loaded
       return Scaffold(
-        appBar: AppBar(title: const Text('Loading...')),
-        body: const Center(child: CircularProgressIndicator()),
-      );
-    }
-
-    // If categories are loading
-    if (categoryViewModel.isLoading) {
-      return Scaffold(
-        appBar: AppBar(title: const Text('Loading...')),
-        body: const Center(child: CircularProgressIndicator()),
-      );
-    }
-
-    // If there was an error loading categories
-    if (categoryViewModel.error != null) {
-      return Scaffold(
-        appBar: AppBar(title: const Text('Error')),
-        body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text('Error: ${categoryViewModel.error}'),
-              ElevatedButton(
-                onPressed: () => categoryViewModel.loadCategories(),
-                child: const Text('Retry'),
-              ),
-            ],
+        appBar: AppBar(
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back),
+            onPressed: () {
+              context.go('/restaurant/${widget.restaurantId}');
+            },
           ),
+          title: const Text('Loading...'),
         ),
+        body: const Center(child: CircularProgressIndicator()),
       );
     }
 
@@ -87,7 +71,7 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () {
-            context.go('/');
+            context.go('/restaurant/${widget.restaurantId}');
           },
         ),
         title: Text(category.name),
@@ -105,8 +89,8 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
                 children: [
                   Text('Error: ${viewModel.error}'),
                   ElevatedButton(
-                    onPressed: () =>
-                        viewModel.loadDishesByCategory(widget.categoryId),
+                    onPressed: () => viewModel.loadDishesByCategory(
+                        widget.restaurantId, widget.categoryId),
                     child: const Text('Retry'),
                   ),
                 ],

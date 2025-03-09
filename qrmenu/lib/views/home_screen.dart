@@ -8,7 +8,12 @@ import 'package:qrmenu/models/category_model.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+  final String restaurantId;
+
+  const HomeScreen({
+    super.key,
+    required this.restaurantId,
+  });
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -20,9 +25,19 @@ class _HomeScreenState extends State<HomeScreen> {
     super.initState();
     // Load data when the screen initializes
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<CategoryViewModel>().loadCategories();
-      context.read<SocialMediaViewModel>().loadSocialMediaInfo();
+      _loadData();
     });
+  }
+
+  void _loadData() {
+    final categoryViewModel =
+        Provider.of<CategoryViewModel>(context, listen: false);
+    final socialMediaViewModel =
+        Provider.of<SocialMediaViewModel>(context, listen: false);
+
+    // Load categories and social media info with restaurant ID
+    categoryViewModel.loadCategories(widget.restaurantId);
+    socialMediaViewModel.loadSocialMediaInfo(widget.restaurantId);
   }
 
   // Launch URL helper method
@@ -106,7 +121,8 @@ class _HomeScreenState extends State<HomeScreen> {
                       children: [
                         Text('Error: ${viewModel.error}'),
                         ElevatedButton(
-                          onPressed: () => viewModel.loadCategories(),
+                          onPressed: () =>
+                              viewModel.loadCategories(widget.restaurantId),
                           child: const Text('Retry'),
                         ),
                       ],
@@ -155,7 +171,10 @@ class _HomeScreenState extends State<HomeScreen> {
             final socialMedia = viewModel.socialMedia;
 
             // Don't show footer if no social links available
-            if (!viewModel.hasSocialLinks) {
+            if (socialMedia.facebook == null &&
+                socialMedia.twitter == null &&
+                socialMedia.instagram == null &&
+                socialMedia.phoneNumber == null) {
               return const SizedBox.shrink();
             }
 
@@ -262,7 +281,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 SizedBox(
                   width: 120, // Increase width to accommodate longer text
                   child: ElevatedButton(
-                    onPressed: () => context.go('/category/${category.id}'),
+                    onPressed: () => context.go(
+                        '/restaurant/${widget.restaurantId}/category/${category.id}'),
                     style: AppTheme.detailsButtonStyle,
                     child: FittedBox(
                       // Add FittedBox to ensure text fits

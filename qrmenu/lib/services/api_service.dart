@@ -7,10 +7,11 @@ class ApiService {
   final Dio _dio = Dio();
   final String _baseUrl = 'http://192.168.1.103:3000';
 
-  // Get all menu categories
-  Future<List<Category>> getCategories() async {
+  // Get all menu categories for a specific restaurant
+  Future<List<Category>> getCategories(String restaurantId) async {
     try {
-      final response = await _dio.get('$_baseUrl/categories');
+      final response =
+          await _dio.get('$_baseUrl/restaurants/$restaurantId/categories');
 
       if (response.statusCode == 200) {
         final List<dynamic> data = response.data;
@@ -23,11 +24,12 @@ class ApiService {
     }
   }
 
-  // Get dishes by category
-  Future<List<Dish>> getDishesByCategory(String categoryId) async {
+  // Get dishes by category for a specific restaurant
+  Future<List<Dish>> getDishesByCategory(
+      String restaurantId, String categoryId) async {
     try {
-      final response =
-          await _dio.get('$_baseUrl/categories/$categoryId/dishes');
+      final response = await _dio.get(
+          '$_baseUrl/restaurants/$restaurantId/categories/$categoryId/dishes');
 
       if (response.statusCode == 200) {
         final List<dynamic> data = response.data;
@@ -40,10 +42,11 @@ class ApiService {
     }
   }
 
-  // Get social media information
-  Future<Settings> getSocialMediaInfo() async {
+  // Get social media information for a specific restaurant
+  Future<Settings> getSocialMediaInfo(String restaurantId) async {
     try {
-      final response = await _dio.get('$_baseUrl/settings/social');
+      final response =
+          await _dio.get('$_baseUrl/restaurants/$restaurantId/settings/social');
 
       if (response.statusCode == 200) {
         return Settings.fromJson(response.data);

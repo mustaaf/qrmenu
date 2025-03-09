@@ -4,7 +4,7 @@ import 'package:qrmenu/routing/router.dart';
 import 'package:qrmenu/viewmodels/category_viewmodel.dart';
 import 'package:qrmenu/viewmodels/dish_viewmodel.dart';
 import 'package:qrmenu/viewmodels/social_media_viewmodel.dart';
-import 'package:qrmenu/config/theme.dart'; // Import the theme file
+import 'package:qrmenu/config/theme.dart';
 
 void main() {
   runApp(const MyApp());
@@ -24,7 +24,7 @@ class MyApp extends StatelessWidget {
       child: MaterialApp.router(
         debugShowCheckedModeBanner: false,
         title: 'QR Restaurant Menu',
-        theme: AppTheme.darkTheme, // Use the theme from the AppTheme class
+        theme: AppTheme.darkTheme,
         routerConfig: AppRouter.router,
       ),
     );

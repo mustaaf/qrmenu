@@ -4,27 +4,26 @@ import 'package:qrmenu/services/api_service.dart';
 
 class SocialMediaViewModel extends ChangeNotifier {
   final ApiService _apiService = ApiService();
-
   Settings _socialMedia = Settings();
+  String _currentRestaurantId = '';
   bool _isLoading = false;
-  String? _error;
 
-  // Getters
   Settings get socialMedia => _socialMedia;
   bool get isLoading => _isLoading;
-  String? get error => _error;
-  bool get hasSocialLinks => _socialMedia.hasSocialLinks;
 
-  // Load social media info from API
-  Future<void> loadSocialMediaInfo() async {
+  Future<void> loadSocialMediaInfo(String restaurantId) async {
+    if (_currentRestaurantId == restaurantId &&
+        _socialMedia.restaurantname != null) return;
+
+    _currentRestaurantId = restaurantId;
     _isLoading = true;
-    _error = null;
     notifyListeners();
 
     try {
-      _socialMedia = await _apiService.getSocialMediaInfo();
+      _socialMedia = await _apiService.getSocialMediaInfo(restaurantId);
     } catch (e) {
-      _error = e.toString();
+      // Use default empty settings object
+      _socialMedia = Settings();
     } finally {
       _isLoading = false;
       notifyListeners();
