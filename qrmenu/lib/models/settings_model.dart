@@ -17,7 +17,7 @@ class Settings {
 
   factory Settings.fromJson(Map<String, dynamic> json) {
     return Settings(
-      restaurantname: json['restaurantname'],
+      restaurantname: json['restaurantName'],
       logo: json['logo'],
       facebook: json['facebook'],
       instagram: json['instagram'],

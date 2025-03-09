@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:qrmenu/config/theme.dart';
 import 'package:qrmenu/models/dish_model.dart';
 import 'package:qrmenu/models/category_model.dart';
 import 'package:qrmenu/viewmodels/category_viewmodel.dart';
 import 'package:qrmenu/viewmodels/dish_viewmodel.dart';
+import 'package:go_router/go_router.dart';
 
 class CategoryDetailScreen extends StatefulWidget {
   final String categoryId;
@@ -82,6 +84,12 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
 
     return Scaffold(
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            context.go('/');
+          },
+        ),
         title: Text(category.name),
       ),
       body: Consumer<DishViewModel>(
@@ -209,31 +217,18 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
             Center(
               child: Text(
                 dish.name,
-                style: const TextStyle(
-                  color: Colors.black,
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: AppTheme.cardTitleStyle,
               ),
             ),
             const SizedBox(height: 8),
-            // Description with no maxLines constraint
             Text(
               dish.description,
-              style: const TextStyle(
-                color: Colors.black,
-                fontSize: 14,
-              ),
+              style: AppTheme.cardDescriptionStyle,
             ),
             const SizedBox(height: 8),
-            // Price at the bottom
             Text(
               '\$${dish.price.toStringAsFixed(2)}',
-              style: const TextStyle(
-                color: Colors.black,
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
+              style: AppTheme.cardPriceStyle,
             ),
           ],
         ),

@@ -5,7 +5,7 @@ import 'package:qrmenu/models/settings_model.dart';
 
 class ApiService {
   final Dio _dio = Dio();
-  final String _baseUrl = 'http://localhost:3000';
+  final String _baseUrl = 'http://192.168.1.103:3000';
 
   // Get all menu categories
   Future<List<Category>> getCategories() async {

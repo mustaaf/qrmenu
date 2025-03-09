@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
+import 'package:qrmenu/config/theme.dart';
 import 'package:qrmenu/viewmodels/category_viewmodel.dart';
 import 'package:qrmenu/viewmodels/social_media_viewmodel.dart'; // Add this import
 import 'package:qrmenu/models/category_model.dart';
@@ -225,14 +226,10 @@ class _HomeScreenState extends State<HomeScreen> {
                   fit: BoxFit.cover,
                   errorBuilder: (_, __, ___) => Container(
                     color: Colors.grey[800],
-                    child: const Icon(Icons.restaurant,
-                        size: 60, color: Colors.white),
                   ),
                 )
               : Container(
                   color: Colors.grey[800],
-                  child: const Icon(Icons.restaurant,
-                      size: 60, color: Colors.white),
                 ),
 
           // Semi-transparent overlay for better text readability
@@ -266,17 +263,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   width: 120, // Increase width to accommodate longer text
                   child: ElevatedButton(
                     onPressed: () => context.go('/category/${category.id}'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.white,
-                      foregroundColor: Colors.black,
-                      padding: const EdgeInsets.symmetric(vertical: 8.0),
-                      shape: const RoundedRectangleBorder(
-                        borderRadius: BorderRadius.zero,
-                        side: BorderSide(
-                            color: Colors.white,
-                            width: 1.0), // Add white border
-                      ),
-                    ),
+                    style: AppTheme.detailsButtonStyle,
                     child: FittedBox(
                       // Add FittedBox to ensure text fits
                       fit: BoxFit.scaleDown,
@@ -313,10 +300,7 @@ class _HomeScreenState extends State<HomeScreen> {
       borderRadius: BorderRadius.circular(20), // Smaller circle
       child: Container(
         padding: const EdgeInsets.all(6), // Smaller padding
-        decoration: BoxDecoration(
-          border: Border.all(color: Colors.white, width: 0.5), // Thinner border
-          shape: BoxShape.circle,
-        ),
+        decoration: AppTheme.socialIconDecoration,
         child: Icon(
           icon,
           color: Colors.white,
