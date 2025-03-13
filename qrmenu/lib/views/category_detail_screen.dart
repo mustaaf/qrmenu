@@ -63,7 +63,11 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
     // Try to find the category by ID
     final category = categoryViewModel.categories.firstWhere(
       (cat) => cat.id == widget.categoryId,
-      orElse: () => Category(id: widget.categoryId, name: 'Unknown Category'),
+      orElse: () => Category(
+        id: widget.categoryId,
+        restaurantId: widget.restaurantId, // Add the missing required parameter
+        name: 'Unknown Category',
+      ),
     );
 
     return Scaffold(

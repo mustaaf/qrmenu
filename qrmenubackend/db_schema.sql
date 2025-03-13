@@ -1,18 +1,25 @@
--- You can run this file to create the restaurant_social table if it doesn't exist yet
-
-CREATE TABLE IF NOT EXISTS restaurant_social (
+-- Users table for authentication
+CREATE TABLE IF NOT EXISTS users (
     id SERIAL PRIMARY KEY,
-    restaurant_id INTEGER NOT NULL REFERENCES restaurants(id) ON DELETE CASCADE,
-    restaurant_name VARCHAR(100) NOT NULL,
-    facebook VARCHAR(255),
-    instagram VARCHAR(255),
-    twitter VARCHAR(255),
-    phone_number VARCHAR(20),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE(restaurant_id)
+    email VARCHAR(255) UNIQUE NOT NULL,
+    password VARCHAR(255) NOT NULL,
+    restaurant_id INTEGER REFERENCES restaurants(id),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Example insert:
--- INSERT INTO restaurant_social (restaurant_id, restaurant_name, facebook, instagram, twitter, phone_number) 
--- VALUES (1, 'adilbabanın restoranı', 'https://www.facebook.com/', 'https://www.instagram.com/', 'https://twitter.com/', '1234567890');
+-- Example user (password: 1234)
+-- INSERT INTO users (email, password, restaurant_id) 
+-- VALUES ('adilbaba@gmail.com', '$2b$10$3euPcmQFCiZiNkQgd5QYg.4LESu4cXczYOW.HdVlJVT2Z1Ty6xJce', 1);
+
+-- Add updated_at column to dishes table if it doesn't exist
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.columns 
+        WHERE table_name = 'dishes' AND column_name = 'updated_at'
+    ) THEN
+        ALTER TABLE dishes ADD COLUMN updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
+    END IF;
+END $$;
+
+-- Remove is_available column from schema - it's not used anymore

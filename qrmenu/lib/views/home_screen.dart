@@ -46,7 +46,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
     // Add http:// prefix if missing
     if (!urlString.startsWith('http://') && !urlString.startsWith('https://')) {
-      urlString = 'https://$urlString';
+      urlString = 'http://$urlString';
     }
 
     final Uri url = Uri.parse(urlString);

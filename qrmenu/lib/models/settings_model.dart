@@ -17,16 +17,16 @@ class Settings {
 
   factory Settings.fromJson(Map<String, dynamic> json) {
     return Settings(
-      restaurantname: json['restaurantName'],
+      restaurantname: json['restaurant_name'],
       logo: json['logo'],
       facebook: json['facebook'],
       instagram: json['instagram'],
       twitter: json['twitter'],
-      phoneNumber: json['phoneNumber'],
+      phoneNumber: json['phone_number'],
     );
   }
 
-  bool get hasSocialLinks =>
+  bool get hasSocialLinks =>  
       facebook != null ||
       instagram != null ||
       twitter != null ||

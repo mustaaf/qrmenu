@@ -1,0 +1,55 @@
+CREATE TABLE restaurants (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Kategoriler tablosu
+CREATE TABLE categories (
+    id SERIAL PRIMARY KEY,
+    restaurant_id INT REFERENCES restaurants(id) ON DELETE CASCADE,
+    name VARCHAR(255) NOT NULL,
+    image_url VARCHAR(255)
+);
+
+-- Yemekler tablosu
+CREATE TABLE dishes (
+    id SERIAL PRIMARY KEY,
+    restaurant_id INT REFERENCES restaurants(id) ON DELETE CASCADE,
+    category_id INT REFERENCES categories(id) ON DELETE CASCADE,
+    name VARCHAR(255) NOT NULL,
+    description TEXT,
+    price DECIMAL(10,2) NOT NULL,
+    image_url VARCHAR(255)
+);
+
+-- Sosyal medya ayarları tablosu
+CREATE TABLE settings (
+    id SERIAL PRIMARY KEY,
+    restaurant_id INT REFERENCES restaurants(id) ON DELETE CASCADE,
+    restaurant_name VARCHAR(255) NOT NULL,
+    facebook VARCHAR(255),
+    instagram VARCHAR(255),
+    twitter VARCHAR(255),
+    phone_number VARCHAR(20)
+);
+
+-- Kullanıcılar tablosu
+CREATE TABLE users (
+    id SERIAL PRIMARY KEY,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    password VARCHAR(255) NOT NULL,
+    restaurant_id INT REFERENCES restaurants(id) ON DELETE SET NULL, -- Kullanıcıya ait restoran bilgisi
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.columns 
+        WHERE table_name = 'dishes' AND column_name = 'updated_at'
+    ) THEN
+        ALTER TABLE dishes ADD COLUMN updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
+    END IF;
+END $$;
+
