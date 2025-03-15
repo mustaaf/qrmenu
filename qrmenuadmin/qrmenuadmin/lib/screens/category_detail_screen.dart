@@ -99,7 +99,7 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  'Menu Items',
+                  'Menüdeki Ürünler',
                   style: Theme.of(context).textTheme.titleLarge,
                 ),
                 ElevatedButton.icon(
@@ -114,7 +114,7 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
                     );
                   },
                   icon: const Icon(Icons.add),
-                  label: const Text('Add Item'),
+                  label: const Text('Yeni ürün ekle'),
                 ),
               ],
             ),
@@ -132,7 +132,7 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
                           menuProvider.menuItems.isEmpty
                               ? const Center(
                                 child: Text(
-                                  'No menu items found. Add your first item!',
+                                  'Henüz ürün eklenmemiş. İlk ürünü ekleyin!',
                                 ),
                               )
                               : ListView.builder(
@@ -216,7 +216,7 @@ class MenuItemCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    '\$${menuItem.price.toStringAsFixed(2)}',
+                    '₺${menuItem.price.toStringAsFixed(2)}',
                     style: const TextStyle(
                       fontWeight: FontWeight.bold,
                       color: Colors.blue,
@@ -260,12 +260,12 @@ class MenuItemCard extends StatelessWidget {
       context: context,
       builder:
           (ctx) => AlertDialog(
-            title: const Text('Delete Item'),
-            content: Text('Are you sure you want to delete ${menuItem.name}?'),
+            title: const Text('Yemeği sil'),
+            content: Text('Yemeği silmek istediğinize emin misiniz?'),
             actions: [
               TextButton(
                 onPressed: () => Navigator.of(ctx).pop(),
-                child: const Text('Cancel'),
+                child: const Text('Vazgeç'),
               ),
               TextButton(
                 onPressed: () {
@@ -276,10 +276,7 @@ class MenuItemCard extends StatelessWidget {
                     listen: false,
                   ).deleteMenuItem(menuItem.id, categoryId);
                 },
-                child: const Text(
-                  'Delete',
-                  style: TextStyle(color: Colors.red),
-                ),
+                child: const Text('Sil', style: TextStyle(color: Colors.red)),
               ),
             ],
           ),

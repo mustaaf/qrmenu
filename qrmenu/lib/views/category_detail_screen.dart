@@ -215,7 +215,7 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              '\$${dish.price.toStringAsFixed(2)}',
+              '₺${dish.price.toStringAsFixed(2)}',
               style: AppTheme.cardPriceStyle,
             ),
           ],

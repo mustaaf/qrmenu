@@ -83,7 +83,37 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
-  Future<void> logout() async {
+  // SharedPreferences için anahtarlar
+  static const String EMAIL_KEY = 'saved_email';
+  static const String PASSWORD_KEY = 'saved_password';
+
+  // Giriş bilgilerini kaydet
+  Future<void> saveCredentials(String email, String password) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(EMAIL_KEY, email);
+    await prefs.setString(PASSWORD_KEY, password);
+  }
+
+  // Kaydedilmiş email'i getir
+  Future<String?> getSavedEmail() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(EMAIL_KEY);
+  }
+
+  // Kaydedilmiş şifreyi getir
+  Future<String?> getSavedPassword() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(PASSWORD_KEY);
+  }
+
+  // Kaydedilmiş giriş bilgilerini temizle
+  Future<void> clearSavedCredentials() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(EMAIL_KEY);
+    await prefs.remove(PASSWORD_KEY);
+  }
+
+  Future<void> logout({bool clearSavedCredentials = false}) async {
     _token = null;
     _userId = null;
     _restaurantId = null;
@@ -93,6 +123,11 @@ class AuthProvider extends ChangeNotifier {
     prefs.remove('jwt_token');
     prefs.remove('user_id');
     prefs.remove('restaurant_id');
+
+    // Eğer parametre true ise, kaydedilmiş şifreyi de sil
+    if (clearSavedCredentials) {
+      await this.clearSavedCredentials();
+    }
 
     notifyListeners();
   }

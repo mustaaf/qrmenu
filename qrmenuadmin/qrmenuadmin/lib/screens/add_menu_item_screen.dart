@@ -162,7 +162,7 @@ class _AddMenuItemScreenState extends State<AddMenuItemScreen> {
         children: const [
           Icon(Icons.add_photo_alternate, size: 50),
           SizedBox(height: 8),
-          Text('Tap to select an image'),
+          Text('Resim Seç (opsiyonel)'),
         ],
       );
     }
@@ -266,7 +266,7 @@ class _AddMenuItemScreenState extends State<AddMenuItemScreen> {
     final menuProvider = Provider.of<MenuProvider>(context);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Add Menu Item')),
+      appBar: AppBar(title: const Text('Yeni ürün ekle')),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Form(
@@ -291,12 +291,12 @@ class _AddMenuItemScreenState extends State<AddMenuItemScreen> {
               TextFormField(
                 controller: _nameController,
                 decoration: const InputDecoration(
-                  labelText: 'Item Name',
+                  labelText: 'Ürün ismi',
                   border: OutlineInputBorder(),
                 ),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Please enter an item name';
+                    return 'Ürün ismi boş olamaz';
                   }
                   return null;
                 },
@@ -305,7 +305,7 @@ class _AddMenuItemScreenState extends State<AddMenuItemScreen> {
               TextFormField(
                 controller: _descriptionController,
                 decoration: const InputDecoration(
-                  labelText: 'Description',
+                  labelText: 'ürün açıklaması',
                   border: OutlineInputBorder(),
                 ),
                 maxLines: 3,
@@ -320,9 +320,9 @@ class _AddMenuItemScreenState extends State<AddMenuItemScreen> {
               TextFormField(
                 controller: _priceController,
                 decoration: const InputDecoration(
-                  labelText: 'Price',
+                  labelText: 'Ürün fiyatı',
                   border: OutlineInputBorder(),
-                  prefixText: '\$',
+                  prefixText: '₺',
                 ),
                 keyboardType: const TextInputType.numberWithOptions(
                   decimal: true,
@@ -347,7 +347,7 @@ class _AddMenuItemScreenState extends State<AddMenuItemScreen> {
                     menuProvider.isLoading
                         ? const CircularProgressIndicator()
                         : const Text(
-                          'Save Menu Item',
+                          'Yeni ürün ekle',
                           style: TextStyle(fontSize: 16),
                         ),
               ),

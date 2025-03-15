@@ -98,7 +98,7 @@ class _AddCategoryScreenState extends State<AddCategoryScreen> {
         children: const [
           Icon(Icons.add_photo_alternate, size: 50),
           SizedBox(height: 8),
-          Text('Tap to select an image (optional)'),
+          Text('Resim Seç (opsiyonel)'),
         ],
       );
     }
@@ -180,12 +180,12 @@ class _AddCategoryScreenState extends State<AddCategoryScreen> {
               TextFormField(
                 controller: _nameController,
                 decoration: const InputDecoration(
-                  labelText: 'Category Name',
+                  labelText: 'Kategori Adı',
                   border: OutlineInputBorder(),
                 ),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Please enter a category name';
+                    return 'kategori adı boş olamaz';
                   }
                   return null;
                 },
@@ -199,10 +199,7 @@ class _AddCategoryScreenState extends State<AddCategoryScreen> {
                 child:
                     menuProvider.isLoading
                         ? const CircularProgressIndicator()
-                        : const Text(
-                          'Save Category',
-                          style: TextStyle(fontSize: 16),
-                        ),
+                        : const Text('Ekle', style: TextStyle(fontSize: 16)),
               ),
               if (menuProvider.errorMessage != null)
                 Padding(

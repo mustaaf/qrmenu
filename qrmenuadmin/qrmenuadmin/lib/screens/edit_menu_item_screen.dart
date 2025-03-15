@@ -2,8 +2,12 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import '../models/menu_item.dart';
 import '../providers/menu_provider.dart';
+// Import dart:html conditionally for web
+// ignore: avoid_web_libraries_in_flutter
+import 'dart:html' as html;
 
 class EditMenuItemScreen extends StatefulWidget {
   final MenuItem menuItem;
@@ -25,8 +29,10 @@ class _EditMenuItemScreenState extends State<EditMenuItemScreen> {
   late TextEditingController _descriptionController;
   late TextEditingController _priceController;
   File? _selectedImage;
+  XFile? _selectedImageFile; // XFile for both web and mobile
   final _picker = ImagePicker();
   bool _imageChanged = false;
+  String? _webImageUrl; // For web image preview
 
   @override
   void initState() {
@@ -45,16 +51,154 @@ class _EditMenuItemScreenState extends State<EditMenuItemScreen> {
     _nameController.dispose();
     _descriptionController.dispose();
     _priceController.dispose();
+    // Clean up web resources
+    if (kIsWeb && _webImageUrl != null) {
+      html.Url.revokeObjectUrl(_webImageUrl!);
+    }
     super.dispose();
   }
 
   Future<void> _pickImage() async {
-    final pickedImage = await _picker.pickImage(source: ImageSource.gallery);
-    if (pickedImage != null) {
-      setState(() {
-        _selectedImage = File(pickedImage.path);
-        _imageChanged = true;
-      });
+    try {
+      final pickedImage = await _picker.pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 800,
+        maxHeight: 800,
+        imageQuality: 85,
+      );
+
+      if (pickedImage != null) {
+        setState(() {
+          _selectedImageFile = pickedImage;
+          _imageChanged = true;
+
+          // For mobile platforms, convert XFile to File
+          if (!kIsWeb) {
+            _selectedImage = File(pickedImage.path);
+          } else {
+            // For web, create preview URL
+            _createWebImagePreview(pickedImage);
+          }
+        });
+      }
+    } catch (e) {
+      print('Error picking image: $e');
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error selecting image: $e')));
+    }
+  }
+
+  // Create web image preview
+  void _createWebImagePreview(XFile file) async {
+    if (kIsWeb) {
+      try {
+        // Read the file bytes
+        final bytes = await file.readAsBytes();
+
+        if (bytes.isEmpty) {
+          print('Warning: Image data is empty');
+          return;
+        }
+
+        // Get the file extension to determine MIME type
+        final fileName = file.name.toLowerCase();
+        String mimeType = 'image/jpeg'; // Default
+
+        if (fileName.endsWith('.png')) {
+          mimeType = 'image/png';
+        } else if (fileName.endsWith('.jpg') || fileName.endsWith('.jpeg')) {
+          mimeType = 'image/jpeg';
+        } else if (fileName.endsWith('.gif')) {
+          mimeType = 'image/gif';
+        } else if (fileName.endsWith('.webp')) {
+          mimeType = 'image/webp';
+        }
+
+        // Clean up previous URL if exists
+        if (_webImageUrl != null) {
+          html.Url.revokeObjectUrl(_webImageUrl!);
+        }
+
+        // Create a blob with explicit type
+        final blob = html.Blob([bytes], mimeType);
+        _webImageUrl = html.Url.createObjectUrlFromBlob(blob);
+
+        setState(() {}); // Trigger rebuild for preview
+      } catch (e) {
+        print('Error creating web preview: $e');
+      }
+    }
+  }
+
+  // Build image preview widget based on state and platform
+  Widget _buildImagePreview() {
+    if (_imageChanged) {
+      if (kIsWeb) {
+        // Web platform with selected image
+        if (_webImageUrl != null) {
+          return ClipRRect(
+            borderRadius: BorderRadius.circular(9),
+            child: Image.network(
+              _webImageUrl!,
+              fit: BoxFit.cover,
+              errorBuilder:
+                  (context, error, _) => Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.error, color: Colors.red, size: 40),
+                        SizedBox(height: 8),
+                        Text('Error loading image: $error'),
+                      ],
+                    ),
+                  ),
+            ),
+          );
+        } else {
+          return const Center(child: CircularProgressIndicator());
+        }
+      } else {
+        // Mobile platform with selected image
+        return ClipRRect(
+          borderRadius: BorderRadius.circular(9),
+          child: Image.file(
+            _selectedImage!,
+            fit: BoxFit.cover,
+            errorBuilder:
+                (context, error, _) =>
+                    Center(child: Text('Error loading image: $error')),
+          ),
+        );
+      }
+    } else if (widget.menuItem.imageUrl.isNotEmpty) {
+      // Show existing image if available
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(9),
+        child: Image.network(
+          widget.menuItem.imageUrl,
+          fit: BoxFit.cover,
+          errorBuilder:
+              (ctx, error, _) => Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: const [
+                  Icon(Icons.broken_image, size: 50),
+                  SizedBox(height: 8),
+                  Text('Image not available'),
+                ],
+              ),
+        ),
+      );
+    } else {
+      // No image case
+      return Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: const [
+          Icon(Icons.add_photo_alternate, size: 50),
+          SizedBox(height: 8),
+          Text('Tap to select an image'),
+        ],
+      );
     }
   }
 
@@ -66,18 +210,25 @@ class _EditMenuItemScreenState extends State<EditMenuItemScreen> {
     final menuProvider = Provider.of<MenuProvider>(context, listen: false);
     final price = double.tryParse(_priceController.text.trim()) ?? 0.0;
 
-    // Change this part - explicitly pass a parameter to indicate if image changed
+    // Update the menu item with the appropriate parameters for web/mobile
     final success = await menuProvider.updateMenuItem(
       widget.menuItem.id,
       _nameController.text.trim(),
       _descriptionController.text.trim(),
       price,
       widget.categoryId,
-      _imageChanged ? _selectedImage : null,
-      _imageChanged, // Pass whether image was changed or not
+      !kIsWeb && _imageChanged ? _selectedImage : null, // Mobile image file
+      kIsWeb ? _selectedImageFile : null, // Web image file (XFile)
+      _imageChanged, // Flag indicating image was changed
     );
 
     if (success && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Ürün güncellendi'),
+          backgroundColor: Colors.green,
+        ),
+      );
       Navigator.of(context).pop();
     }
   }
@@ -105,40 +256,7 @@ class _EditMenuItemScreenState extends State<EditMenuItemScreen> {
                     borderRadius: BorderRadius.circular(10),
                     border: Border.all(color: Colors.grey),
                   ),
-                  child:
-                      _imageChanged && _selectedImage != null
-                          ? ClipRRect(
-                            borderRadius: BorderRadius.circular(9),
-                            child: Image.file(
-                              _selectedImage!,
-                              fit: BoxFit.cover,
-                            ),
-                          )
-                          : widget.menuItem.imageUrl.isNotEmpty
-                          ? ClipRRect(
-                            borderRadius: BorderRadius.circular(9),
-                            child: Image.network(
-                              widget.menuItem.imageUrl,
-                              fit: BoxFit.cover,
-                              errorBuilder:
-                                  (ctx, error, _) => Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: const [
-                                      Icon(Icons.broken_image, size: 50),
-                                      SizedBox(height: 8),
-                                      Text('Image not available'),
-                                    ],
-                                  ),
-                            ),
-                          )
-                          : Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: const [
-                              Icon(Icons.add_photo_alternate, size: 50),
-                              SizedBox(height: 8),
-                              Text('Tap to select an image'),
-                            ],
-                          ),
+                  child: _buildImagePreview(),
                 ),
               ),
               const SizedBox(height: 16),

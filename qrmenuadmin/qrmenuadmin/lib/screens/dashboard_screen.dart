@@ -30,7 +30,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Menu Dashboard'),
+        title: const Text('Kategorileriniz'),
         actions: [
           IconButton(
             icon: const Icon(Icons.logout),
@@ -49,11 +49,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 onRefresh: () => menuProvider.fetchCategories(),
                 child:
                     menuProvider.categories.isEmpty
-                        ? const Center(
-                          child: Text(
-                            'No categories found. Create your first category!',
-                          ),
-                        )
+                        ? const Center(child: Text('Henüz kategori eklenmedi.'))
                         : ListView.builder(
                           itemCount: menuProvider.categories.length,
                           itemBuilder:
@@ -97,7 +93,7 @@ class CategoryCard extends StatelessWidget {
             IconButton(
               icon: const Icon(Icons.delete, color: Colors.red),
               onPressed: () => _showDeleteConfirmation(context),
-              tooltip: 'Delete Category',
+              tooltip: 'Kateogriyi Sil',
             ),
             // Navigation icon
             const Icon(Icons.arrow_forward_ios),
@@ -120,25 +116,73 @@ class CategoryCard extends StatelessWidget {
       builder:
           (ctx) => AlertDialog(
             title: const Text('Delete Category'),
-            content: Text(
-              'Are you sure you want to delete ${category.name}?\n\nThis will also delete all menu items in this category.',
-            ),
+            content: Text('kategori silmek istediğinize emin misiniz?'),
             actions: [
               TextButton(
                 onPressed: () => Navigator.of(ctx).pop(),
-                child: const Text('Cancel'),
+                child: const Text('vazgeç'),
               ),
               TextButton(
-                onPressed: () {
-                  Navigator.of(ctx).pop();
-                  // Delete the category
-                  Provider.of<MenuProvider>(
+                onPressed: () async {
+                  // Önce silme işlemini gerçekleştir
+                  final menuProvider = Provider.of<MenuProvider>(
                     context,
                     listen: false,
-                  ).deleteCategory(category.id);
+                  );
+
+                  // İşlem bitmeden önce dialoğu kapatmıyoruz
+                  // Navigator.of(ctx).pop();
+
+                  // Silme işlemi sırasında bir loading göstergesi göster
+                  showDialog(
+                    context: ctx,
+                    barrierDismissible: false,
+                    builder:
+                        (loadingContext) =>
+                            const Center(child: CircularProgressIndicator()),
+                  );
+
+                  final success = await menuProvider.deleteCategory(
+                    category.id,
+                  );
+
+                  // Şimdi loading dialoğunu kapat
+                  if (ctx.mounted) {
+                    Navigator.of(ctx).pop();
+                  }
+
+                  // Eğer başarısızsa, hata mesajını göster
+                  if (!success &&
+                      ctx.mounted &&
+                      menuProvider.errorMessage != null) {
+                    showDialog(
+                      context: ctx,
+                      builder:
+                          (errorCtx) => AlertDialog(
+                            title: const Text('Silme Hatası'),
+                            content: Text(menuProvider.errorMessage!),
+                            actions: [
+                              TextButton(
+                                onPressed: () {
+                                  Navigator.of(
+                                    errorCtx,
+                                  ).pop(); // Hata dialoğunu kapat
+                                  Navigator.of(
+                                    ctx,
+                                  ).pop(); // Orijinal onay dialoğunu kapat
+                                },
+                                child: const Text('Tamam'),
+                              ),
+                            ],
+                          ),
+                    );
+                  } else if (ctx.mounted) {
+                    // Başarılıysa sadece onay dialoğunu kapat
+                    Navigator.of(ctx).pop();
+                  }
                 },
                 style: TextButton.styleFrom(foregroundColor: Colors.red),
-                child: const Text('Delete'),
+                child: const Text('sil'),
               ),
             ],
           ),

@@ -13,6 +13,29 @@ class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  bool _rememberPassword = false; // Şifre hatırlama durumu için yeni değişken
+
+  @override
+  void initState() {
+    super.initState();
+    // Uygulama başlatıldığında kaydedilmiş şifre varsa yükle
+    _loadSavedCredentials();
+  }
+
+  // Kaydedilmiş kullanıcı bilgilerini yükle
+  Future<void> _loadSavedCredentials() async {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final email = await authProvider.getSavedEmail();
+    final password = await authProvider.getSavedPassword();
+
+    if (email != null && password != null) {
+      setState(() {
+        _emailController.text = email;
+        _passwordController.text = password;
+        _rememberPassword = true;
+      });
+    }
+  }
 
   @override
   void dispose() {
@@ -27,10 +50,17 @@ class _LoginScreenState extends State<LoginScreen> {
     }
 
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    final success = await authProvider.login(
-      _emailController.text.trim(),
-      _passwordController.text.trim(),
-    );
+    final email = _emailController.text.trim();
+    final password = _passwordController.text.trim();
+
+    // Şifre hatırlama ayarını kaydet
+    if (_rememberPassword) {
+      await authProvider.saveCredentials(email, password);
+    } else {
+      await authProvider.clearSavedCredentials();
+    }
+
+    final success = await authProvider.login(email, password);
 
     if (success && mounted) {
       Navigator.of(context).pushReplacementNamed('/dashboard');
@@ -77,10 +107,10 @@ class _LoginScreenState extends State<LoginScreen> {
                           keyboardType: TextInputType.emailAddress,
                           validator: (value) {
                             if (value == null || value.isEmpty) {
-                              return 'Please enter your email';
+                              return 'Emailinizi giriniz';
                             }
                             if (!value.contains('@')) {
-                              return 'Please enter a valid email';
+                              return 'lütfen geçerli bir email giriniz';
                             }
                             return null;
                           },
@@ -89,20 +119,36 @@ class _LoginScreenState extends State<LoginScreen> {
                         TextFormField(
                           controller: _passwordController,
                           decoration: const InputDecoration(
-                            labelText: 'Password',
+                            labelText: 'Şifre',
                             prefixIcon: Icon(Icons.lock),
                           ),
                           obscureText: true,
                           validator: (value) {
                             if (value == null || value.isEmpty) {
-                              return 'Please enter your password';
+                              return 'Lütfen şifrenizi giriniz';
                             }
                             if (value.length < 6) {
-                              return 'Password must be at least 6 characters';
+                              return 'şifre en az 6 karakter olmalıdır';
                             }
                             return null;
                           },
                         ),
+
+                        // "Beni hatırla" checkbox'ı
+                        Row(
+                          children: [
+                            Checkbox(
+                              value: _rememberPassword,
+                              onChanged: (value) {
+                                setState(() {
+                                  _rememberPassword = value ?? false;
+                                });
+                              },
+                            ),
+                            const Text('Beni Hatırla'),
+                          ],
+                        ),
+
                         const SizedBox(height: 24),
                         SizedBox(
                           width: double.infinity,
@@ -115,7 +161,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 authProvider.isLoading
                                     ? const CircularProgressIndicator()
                                     : const Text(
-                                      'Login',
+                                      'Giriş yap',
                                       style: TextStyle(fontSize: 16),
                                     ),
                           ),

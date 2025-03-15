@@ -530,6 +530,7 @@ class MenuProvider extends ChangeNotifier {
     double price,
     String categoryId,
     File? imageFile,
+    XFile? webImageFile,
     bool imageChanged,
   ) async {
     _isLoading = true;
@@ -548,53 +549,136 @@ class MenuProvider extends ChangeNotifier {
         '$_baseUrl/restaurants/$restaurantId/categories/$categoryId/dishes/$id',
       );
 
-      // Use different request methods based on whether the image changed
-      http.Response response;
+      // Handle image updates based on platform
+      if (imageChanged) {
+        if (kIsWeb && webImageFile != null) {
+          // Web platform with image update
+          try {
+            // Read image bytes
+            final bytes = await webImageFile.readAsBytes();
+            if (bytes.isEmpty) {
+              throw Exception('Image bytes are empty');
+            }
 
-      if (imageChanged && imageFile != null) {
-        // Use MultipartRequest when uploading a new image
-        var request = http.MultipartRequest('PUT', apiUrl);
+            // Convert to base64 for transport
+            final base64Image = base64Encode(bytes);
 
-        // Add headers
-        request.headers.addAll({'Authorization': 'Bearer $token'});
+            // Determine file extension
+            final fileName = webImageFile.name.toLowerCase();
+            String fileExtension = 'jpeg';
 
-        // Add text fields
-        request.fields['name'] = name;
-        request.fields['description'] = description;
-        request.fields['price'] = price.toString();
-        request.fields['categoryId'] = categoryId;
-        request.fields['restaurantId'] = restaurantId;
+            if (fileName.endsWith('.png')) {
+              fileExtension = 'png';
+            } else if (fileName.endsWith('.jpg') ||
+                fileName.endsWith('.jpeg')) {
+              fileExtension = 'jpeg';
+            } else if (fileName.endsWith('.gif')) {
+              fileExtension = 'gif';
+            } else if (fileName.endsWith('.webp')) {
+              fileExtension = 'webp';
+            }
 
-        // Add image file
-        request.files.add(
-          await http.MultipartFile.fromPath('image', imageFile.path),
-        );
+            // URL pattern for the image
+            final imageUrlPattern =
+                '/uploads/$restaurantId/$categoryId/$id.$fileExtension';
 
-        // Send request
-        final streamedResponse = await request.send();
-        response = await http.Response.fromStream(streamedResponse);
-      } else {
-        // Use regular PUT request with JSON body when not changing the image
-        response = await http.put(
-          apiUrl,
-          headers: {
-            'Authorization': 'Bearer $token',
-            'Content-Type': 'application/json',
-          },
-          body: json.encode({
-            'name': name,
-            'description': description,
-            'price': price,
-            'categoryId': categoryId,
-            'restaurantId': restaurantId,
-            'keepExistingImage':
-                true, // Tell backend to keep the existing image
-          }),
-        );
+            // JSON payload with base64 image
+            final payload = {
+              'name': name,
+              'description': description,
+              'price': price,
+              'categoryId': categoryId,
+              'restaurantId': restaurantId,
+              'imageUrlPattern': imageUrlPattern,
+              'imageBase64': base64Image,
+              'fileName': webImageFile.name,
+              'fileExtension': fileExtension,
+              'updateImage': true,
+            };
+
+            // Make the request
+            final response = await http.put(
+              apiUrl,
+              headers: {
+                'Authorization': 'Bearer $token',
+                'Content-Type': 'application/json',
+              },
+              body: jsonEncode(payload),
+            );
+
+            if (response.statusCode == 200) {
+              await fetchMenuItems(categoryId);
+              _isLoading = false;
+              notifyListeners();
+              return true;
+            } else {
+              _errorMessage =
+                  'Failed to update menu item: ${response.statusCode} - ${response.body}';
+              _isLoading = false;
+              notifyListeners();
+              return false;
+            }
+          } catch (e) {
+            print('Error in web image update: $e');
+            throw Exception('Failed to process web image: $e');
+          }
+        } else if (imageFile != null) {
+          // Mobile platform with image update
+          var request = http.MultipartRequest('PUT', apiUrl);
+
+          // Add headers
+          request.headers.addAll({'Authorization': 'Bearer $token'});
+
+          // Add text fields
+          request.fields['name'] = name;
+          request.fields['description'] = description;
+          request.fields['price'] = price.toString();
+          request.fields['categoryId'] = categoryId;
+          request.fields['restaurantId'] = restaurantId;
+
+          // Add image file
+          request.files.add(
+            await http.MultipartFile.fromPath('image', imageFile.path),
+          );
+
+          // Send request
+          final streamedResponse = await request.send();
+          final response = await http.Response.fromStream(streamedResponse);
+
+          if (response.statusCode == 200) {
+            await fetchMenuItems(categoryId);
+            _isLoading = false;
+            notifyListeners();
+            return true;
+          } else {
+            _errorMessage =
+                'Failed to update menu item: ${response.statusCode} - ${response.body}';
+            _isLoading = false;
+            notifyListeners();
+            return false;
+          }
+        }
       }
 
+      // No image change case - use regular PUT request
+      final response = await http.put(
+        apiUrl,
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+        body: json.encode({
+          'name': name,
+          'description': description,
+          'price': price,
+          'categoryId': categoryId,
+          'restaurantId': restaurantId,
+          'keepExistingImage': true,
+        }),
+      );
+
       if (response.statusCode == 200) {
-        await fetchMenuItems(categoryId); // Refresh menu items
+        await fetchMenuItems(categoryId);
         _isLoading = false;
         notifyListeners();
         return true;
